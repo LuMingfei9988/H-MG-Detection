@@ -1,44 +1,39 @@
 # Pfago-Cleavage Concentration Calculator
 
 ## What changed in this version
-- **Fixed the broken CSS.** The old version injected styles through
-  `st.markdown(..., unsafe_allow_html=True)`, which runs the string through
-  Streamlit's markdown parser first. Blank lines inside the `<style>` block
-  made that parser drop out of "raw HTML" mode partway through, so half the
-  CSS printed as literal text on the page. This version uses `st.html()`,
-  which injects raw HTML/CSS directly with no markdown pass — that bug
-  class is no longer possible. (Requires `streamlit>=1.37`.)
-- **Removed the sidebar.** Everything lives in the main page now.
-- **Removed the substance dropdown.** Histamine and Malachite Green each
-  get their own always-visible input box; Calculate computes both at once.
-- **Restructured the flow** to: Sample ID + Analyst ID → Histamine input →
-  Malachite Green input → Calculate → two result boxes → Generate Report →
-  "Other details" (batch/machine ID, background signal, calibration,
-  history).
-- **History is now tied to the Analyst / User ID** field — the "Other
-  details" panel only shows and exports rows logged under the ID currently
-  entered at the top.
+- **Calibration password removed.** Slope/intercept for each substance are
+  now directly editable at the bottom of the page — no unlock step.
+- **Flattened "Other details."** Instead of one big collapsed panel, the
+  page just has plain sections at the bottom: Background Signal,
+  Calibration, History. Nothing extra hidden behind clicks.
+- **History is now tied to the browser, not a typed-in name.** On first
+  load the app sets a `pfago_uid` cookie in your browser (via a small
+  inline script, since Streamlit's own API can read cookies but not set
+  them) and reads it back with `st.context.cookies` on every load. History
+  is filtered to rows logged from that cookie. No login, no manual ID.
+  - This requires `streamlit>=1.37` (for `st.context`). If cookies are
+    blocked or you're in private/incognito mode, a session-only ID is used
+    as a fallback and history won't survive a full page reload — that's an
+    inherent browser-storage limitation, not a bug in the app.
 
 ## Files
-- `app.py` — the app
+- `app.py`
 - `requirements.txt`
 - `.streamlit/config.toml` — base dark theme
 
 ## Deploy (free)
-1. Push these files to a public GitHub repo (root of the repo, keep the
-   `.streamlit/config.toml` path).
-2. Go to https://share.streamlit.io, sign in with GitHub, "New app", point
-   it at the repo with main file `app.py`, Deploy.
+1. Push these files to a public GitHub repo (keep `.streamlit/config.toml`
+   in its folder).
+2. https://share.streamlit.io → sign in with GitHub → "New app" → point at
+   the repo, main file `app.py` → Deploy.
 
 ## Notes
-- Calibration is password-gated inside "Other details" (demo password
-  `admin123` — change `CALIB_PASSWORD` in `app.py`, or better, move it to
-  `st.secrets` before real lab use).
-- History storage is in-memory for the running app session — it resets if
-  the app restarts/redeploys. If you need permanent storage across
-  restarts, the next step is wiring in a database (Google Sheets API or
-  Supabase are both free-tier options) — say the word and I'll build that.
-- I have not been able to render this Streamlit app myself in this
-  environment (no network access), so please screenshot again after
-  redeploying if anything still looks off — I'd rather fix it in one more
-  precise pass than guess.
+- Log storage is in-memory for the running app process — it resets if the
+  app restarts/redeploys, and (because it's cookie- not account-based) a
+  cleared-cookies visit looks like a new user. For real permanent,
+  cross-restart storage, the next step would be a small database (Google
+  Sheets API or Supabase both have free tiers) keyed on the same cookie —
+  happy to wire that in if you want it.
+- I still don't have network access in this environment, so I can't render
+  the app myself before you see it. If anything's off, a screenshot gets
+  it fixed fast.
